@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Teacher Login | College Portal{% endblock %}
+{% block nav %}<nav class="site-nav"><div class="nav-inner"><a href="/"><i class="fas fa-home"></i> Home</a><a href="/teacher/register"><i class="fas fa-user-plus"></i> Register</a><a href="/student/login"><i class="fas fa-graduation-cap"></i> Student</a><a href="/principal/login"><i class="fas fa-user-tie"></i> Principal</a></div></nav>{% endblock %}
+{% block content %}
+<div class="main" style="max-width:460px;margin:0 auto">
+  <div style="text-align:center;margin-bottom:22px">
+    <div style="font-size:54px;margin-bottom:8px">👩‍🏫</div>
+    <h2 style="font-family:'EB Garamond',serif;font-size:26px;color:var(--navy)">Teacher Login</h2>
+    <p style="color:var(--gray5);font-size:13.5px">Faculty & Staff Access Portal</p>
+  </div>
+  <div class="card">
+    <div class="card-head"><i class="fas fa-lock"></i> Secure Staff Login</div>
+    <div class="card-body">
+      <div class="info-box blue"><i class="fas fa-info-circle" style="flex-shrink:0"></i><div>Login with your registered <strong>Teacher ID</strong> and password. Account must be approved by Principal.</div></div>
+      <form method="POST">
+        <div class="form-group"><label class="form-label">Teacher ID</label><input type="text" name="teacher_id" class="form-control" placeholder="e.g. TCH2025001" required autofocus></div>
+        <div class="form-group"><label class="form-label">Password</label><input type="password" name="password" class="form-control" required></div>
+        <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:12px"><i class="fas fa-sign-in-alt"></i> Login</button>
+      </form>
+      <p style="text-align:center;margin-top:14px;font-size:13.5px;color:var(--gray5)">New teacher? <a href="/teacher/register" style="color:var(--navy);font-weight:700">Register here</a></p>
+    </div>
+  </div>
+</div>
+{% endblock %}

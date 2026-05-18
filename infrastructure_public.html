@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Infrastructure Records | College Portal{% endblock %}
+{% block nav %}
+<nav class="site-nav"><div class="nav-inner">
+  <a href="/"><i class="fas fa-home"></i> Home</a>
+  <a href="/infrastructure" class="active"><i class="fas fa-building"></i> Infrastructure</a>
+  {% if session.role %}<a href="/{{ session.role }}/dashboard"><i class="fas fa-tachometer-alt"></i> My Dashboard</a>{% endif %}
+</div></nav>
+{% endblock %}
+{% block content %}
+<div class="main">
+  <div class="page-title">
+    <div class="icon"><i class="fas fa-building"></i></div>
+    <div><h2>Infrastructure Records</h2><div class="sub">Branch-wise room facility inventory — viewable by all users</div></div>
+  </div>
+
+  <!-- SEARCH -->
+  <div class="card">
+    <div class="card-head saff-head"><i class="fas fa-search-location"></i> Search by Room Number</div>
+    <div class="card-body">
+      <div class="search-box">
+        <input type="text" id="roomInput" class="form-control" placeholder="Enter Room Number (e.g. 101, Lab-A)">
+        <button class="btn btn-primary" onclick="searchRoom()"><i class="fas fa-search"></i> Search</button>
+      </div>
+      <div id="roomResult" class="room-result"></div>
+    </div>
+  </div>
+
+  {% if infra %}
+  {% for branch in ['BCA','BBA','BSC','Data Science','BVOC','DSW'] %}
+    {% set rooms = infra|selectattr('branch','eq',branch)|list %}
+    {% if rooms %}
+    <div class="card" style="margin-bottom:18px">
+      <div class="card-head"><i class="fas fa-graduation-cap"></i> {{ branch }} <span class="badge">{{ rooms|length }} Room(s)</span></div>
+      <div style="overflow-x:auto">
+        <table class="tbl">
+          <thead><tr><th>Room No.</th><th>Benches</th><th>Computers</th><th>Projector</th><th>Fans</th><th>Fan Status</th><th>Electrical</th><th>Windows</th><th>Window Cond.</th><th>Last Updated By</th><th>Updated On</th></tr></thead>
+          <tbody>
+          {% for r in rooms %}
+          <tr>
+            <td><strong>{{ r.room_number }}</strong></td>
+            <td>{{ r.num_benches }}</td><td>{{ r.num_computers }}</td>
+            <td>{% if r.projector=='Yes' %}<span class="badge badge-resolved">✓ Yes</span>{% else %}<span class="badge badge-pending">✗ No</span>{% endif %}</td>
+            <td>{{ r.num_fans }}</td>
+            <td><span class="badge {% if r.fan_status=='Working' %}badge-resolved{% elif r.fan_status=='Partially Working' %}badge-progress{% else %}badge-overdue{% endif %}">{{ r.fan_status }}</span></td>
+            <td><span class="badge {% if r.electrical_status=='Good' %}badge-resolved{% else %}badge-overdue{% endif %}">{{ r.electrical_status }}</span></td>
+            <td>{{ r.num_windows }}</td>
+            <td><span class="badge {% if r.window_condition=='Good' %}badge-resolved{% else %}badge-overdue{% endif %}">{{ r.window_condition }}</span></td>
+            <td style="font-size:12px;color:var(--gray5)">{{ r.updated_by or 'System' }}</td>
+            <td style="font-size:12px;color:var(--gray5)">{{ r.updated_at[:10] if r.updated_at else '—' }}</td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+  {% endfor %}
+  {% else %}
+  <div class="card"><div class="card-body" style="text-align:center;padding:50px;color:var(--gray5)">
+    <i class="fas fa-building" style="font-size:48px;opacity:.2;display:block;margin-bottom:14px"></i>
+    No infrastructure records added yet. Teachers can add records from their dashboard.
+  </div></div>
+  {% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+function searchRoom(){
+  const room = document.getElementById('roomInput').value.trim();
+  if(!room){ alert('Please enter a room number'); return; }
+  fetch('/api/room/' + encodeURIComponent(room))
+    .then(r => r.json())
+    .then(d => {
+      const el = document.getElementById('roomResult');
+      if(d.error){
+        el.innerHTML = '<div style="color:var(--red);font-weight:700"><i class="fas fa-times-circle"></i> Room "' + room + '" not found.</div>';
+        el.classList.add('visible'); return;
+      }
+      el.innerHTML = `<h4 style="color:var(--navy);margin-bottom:10px"><i class="fas fa-door-open"></i> Room: ${d.room_number} — ${d.branch}</h4>
+      <table>
+        <tr><td>Benches</td><td>${d.num_benches}</td></tr>
+        <tr><td>Computers</td><td>${d.num_computers}</td></tr>
+        <tr><td>Projector</td><td>${d.projector}</td></tr>
+        <tr><td>Fans</td><td>${d.num_fans} (${d.fan_status})</td></tr>
+        <tr><td>Electrical</td><td>${d.electrical_status}</td></tr>
+        <tr><td>Windows</td><td>${d.num_windows} (${d.window_condition})</td></tr>
+        <tr><td>Last Updated By</td><td>${d.updated_by||'—'}</td></tr>
+        <tr><td>Updated At</td><td>${d.updated_at ? d.updated_at.substring(0,16) : '—'}</td></tr>
+      </table>`;
+      el.classList.add('visible');
+    });
+}
+</script>
+{% endblock %}

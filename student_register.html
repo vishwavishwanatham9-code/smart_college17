@@ -1,0 +1,33 @@
+<!-- ════ STUDENT REGISTER ════════════════════════════════ -->
+{% extends "base.html" %}
+{% block title %}Student Registration | College Portal{% endblock %}
+{% block nav %}<nav class="site-nav"><div class="nav-inner"><a href="/"><i class="fas fa-home"></i> Home</a><a href="/student/login"><i class="fas fa-sign-in-alt"></i> Login</a></div></nav>{% endblock %}
+{% block content %}
+<div class="main" style="max-width:620px;margin:0 auto">
+  <div class="page-title"><div class="icon"><i class="fas fa-user-plus"></i></div><div><h2>Student Registration</h2><div class="sub">Register for complaint portal access — requires Principal approval</div></div></div>
+  <div class="card">
+    <div class="card-head"><i class="fas fa-id-card"></i> New Student Registration Form</div>
+    <div class="card-body">
+      <div class="info-box"><i class="fas fa-info-circle" style="color:var(--saff2);flex-shrink:0;margin-top:1px"></i><div>Your <strong>Student ID must be unique</strong>. Registration will be reviewed by the Principal. You cannot login until approved.</div></div>
+      <form method="POST">
+        <div class="grid-2">
+          <div class="form-group"><label class="form-label">Student ID / Enrollment No. *</label><input type="text" name="student_id" class="form-control" placeholder="e.g. BCA2025001" required></div>
+          <div class="form-group"><label class="form-label">Full Name *</label><input type="text" name="name" class="form-control" placeholder="As per college records" required></div>
+        </div>
+        <div class="grid-2">
+          <div class="form-group"><label class="form-label">Branch / Course *</label>
+            <select name="branch" class="form-control" required><option value="">-- Select --</option><option>BCA</option><option>BBA</option><option>BSC</option><option>Data Science</option><option>BVOC</option><option>DSW</option></select>
+          </div>
+          <div class="form-group"><label class="form-label">Email Address *</label><input type="email" name="email" class="form-control" placeholder="college email preferred" required></div>
+        </div>
+        <div class="grid-2">
+          <div class="form-group"><label class="form-label">Password *</label><input type="password" name="password" class="form-control" required minlength="6" placeholder="Min 6 characters"></div>
+          <div class="form-group"><label class="form-label">Confirm Password *</label><input type="password" name="confirm_password" class="form-control" required></div>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:12px"><i class="fas fa-paper-plane"></i> Submit Registration Request</button>
+      </form>
+      <p style="text-align:center;margin-top:14px;font-size:13.5px;color:var(--gray5)">Already approved? <a href="/student/login" style="color:var(--navy);font-weight:700">Login here</a></p>
+    </div>
+  </div>
+</div>
+{% endblock %}

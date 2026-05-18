@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block title %}Student Dashboard | College Portal{% endblock %}
+{% block nav %}
+<nav class="site-nav"><div class="nav-inner">
+  <a href="/student/dashboard" class="active" data-tab="tab-complaints"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+  <a href="/student/complaint/submit"><i class="fas fa-plus-circle"></i> New Complaint</a>
+  <a href="/infrastructure"><i class="fas fa-building"></i> Infrastructure</a>
+  <a href="/student/logout" class="nav-logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
+</div></nav>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+  <div class="page-title">
+    <div class="icon"><i class="fas fa-graduation-cap"></i></div>
+    <div><h2>Student Dashboard</h2><div class="sub">Welcome, {{ session.name }} &nbsp;|&nbsp; ID: {{ session.student_id }} &nbsp;|&nbsp; Branch: {{ session.branch }}</div></div>
+  </div>
+
+  <!-- STATS -->
+  {% set total = complaints_with_hours|length %}
+  {% set pending = complaints_with_hours|selectattr('c.status','eq','Pending')|list|length %}
+  {% set resolved = complaints_with_hours|selectattr('c.status','eq','Resolved')|list|length %}
+  {% set overdue_count = complaints_with_hours|selectattr('overdue')|list|length %}
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-num">{{ total }}</div><div class="stat-lbl">Total Complaints</div></div>
+    <div class="stat-card" style="border-top-color:#e67e22"><div class="stat-num">{{ pending }}</div><div class="stat-lbl">Pending</div></div>
+    <div class="stat-card" style="border-top-color:var(--green)"><div class="stat-num">{{ resolved }}</div><div class="stat-lbl">Resolved</div></div>
+    <div class="stat-card" style="border-top-color:var(--red)"><div class="stat-num">{{ overdue_count }}</div><div class="stat-lbl">⚠ Overdue (6h+)</div></div>
+  </div>
+
+  {% if overdue_count %}
+  <div class="alert-banner"><i class="fas fa-exclamation-triangle"></i> You have {{ overdue_count }} complaint(s) pending for more than 6 hours without teacher update. These are highlighted below.</div>
+  {% endif %}
+
+  <!-- TABS -->
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="openTab(event,'tab-complaints')" data-tab="tab-complaints"><i class="fas fa-list-alt"></i> My Complaints</button>
+    <button class="tab-btn" onclick="openTab(event,'tab-infra')" data-tab="tab-infra"><i class="fas fa-building"></i> Infrastructure</button>
+    <button class="tab-btn" onclick="openTab(event,'tab-share')" data-tab="tab-share"><i class="fas fa-share-alt"></i> Share Link</button>
+  </div>
+
+  <!-- COMPLAINTS TAB -->
+  <div id="tab-complaints" class="tab-pane active">
+    <div class="card">
+      <div class="card-head"><i class="fas fa-clipboard-list"></i> My Complaint History <span class="badge">{{ total }}</span></div>
+      <div style="overflow-x:auto">
+        {% if complaints_with_hours %}
+        <table class="tbl">
+          <thead><tr>
+            <th>#</th><th>Date Submitted</th><th>Room No.</th><th>Branch</th>
+            <th>Issue Description</th><th>Photo</th><th>Status</th>
+            <th>Hours Since Filed</th><th>Teacher Response</th><th>Updated Photo</th>
+          </tr></thead>
+          <tbody>
+          {% for item in complaints_with_hours %}
+          {% set c = item.c %}
+          <tr style="{% if item.overdue %}background:#fff8f8;{% endif %}">
+            <td>{{ loop.index }}</td>
+            <td style="white-space:nowrap;font-size:12px">{{ c.date_submitted[:16] }}</td>
+            <td><strong>{{ c.room_number }}</strong></td>
+            <td>{{ c.branch }}</td>
+            <td style="max-width:200px;font-size:13px">{{ c.issue_description[:80] }}{% if c.issue_description|length>80 %}…{% endif %}</td>
+            <td>{% if c.photo_path %}<img src="/static/uploads/{{ c.photo_path }}" class="thumb" onclick="showPhoto(this.src)">{% else %}<span style="color:var(--gray4)">—</span>{% endif %}</td>
+            <td>
+              {% if c.status=='Resolved' %}<span class="badge badge-resolved">Resolved</span>
+              {% elif c.status=='In Progress' %}<span class="badge badge-progress">In Progress</span>
+              {% else %}<span class="badge badge-pending">Pending</span>{% endif %}
+            </td>
+            <td>
+              {% if item.hrs < 6 %}
+                <span class="hrs-badge hrs-ok">{{ item.hrs }}h</span>
+              {% elif item.hrs < 12 %}
+                <span class="hrs-badge hrs-warn">⚠ {{ item.hrs }}h</span>
+              {% else %}
+                <span class="hrs-badge hrs-danger">🔴 {{ item.hrs }}h</span>
+              {% endif %}
+              {% if item.overdue %}<br><span style="font-size:11px;color:var(--red);font-weight:700">SLA Breached!</span>{% endif %}
+            </td>
+            <td style="font-size:12.5px;max-width:160px;color:var(--gray5)">{{ c.teacher_response or '—' }}</td>
+            <td>{% if c.updated_photo %}<img src="/static/uploads/{{ c.updated_photo }}" class="thumb" onclick="showPhoto(this.src)" title="Updated Photo">{% else %}<span style="color:var(--gray4)">—</span>{% endif %}</td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div style="padding:44px;text-align:center;color:var(--gray5)">
+          <i class="fas fa-inbox" style="font-size:42px;opacity:.25;display:block;margin-bottom:12px"></i>
+          <strong>No complaints submitted yet.</strong><br>
+          <a href="/student/complaint/submit" style="color:var(--navy);font-weight:700;margin-top:8px;display:inline-block">Submit your first complaint →</a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- INFRASTRUCTURE TAB -->
+  <div id="tab-infra" class="tab-pane">
+    {% if infra %}
+    {% for branch in ['BCA','BBA','BSC','Data Science','BVOC','DSW'] %}
+      {% set rooms = infra|selectattr('branch','eq',branch)|list %}
+      {% if rooms %}
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-head"><i class="fas fa-layer-group"></i> {{ branch }} <span class="badge">{{ rooms|length }} Room(s)</span></div>
+        <div style="overflow-x:auto">
+          <table class="tbl">
+            <thead><tr><th>Room No.</th><th>Benches</th><th>Computers</th><th>Projector</th><th>Fans</th><th>Fan Status</th><th>Electrical</th><th>Windows</th><th>Window Cond.</th></tr></thead>
+            <tbody>{% for r in rooms %}<tr>
+              <td><strong>{{ r.room_number }}</strong></td>
+              <td>{{ r.num_benches }}</td><td>{{ r.num_computers }}</td>
+              <td>{% if r.projector=='Yes' %}<span class="badge badge-resolved">Yes</span>{% else %}<span class="badge badge-pending">No</span>{% endif %}</td>
+              <td>{{ r.num_fans }}</td>
+              <td><span class="badge {% if r.fan_status=='Working' %}badge-resolved{% else %}badge-overdue{% endif %}">{{ r.fan_status }}</span></td>
+              <td><span class="badge {% if r.electrical_status=='Good' %}badge-resolved{% else %}badge-overdue{% endif %}">{{ r.electrical_status }}</span></td>
+              <td>{{ r.num_windows }}</td>
+              <td><span class="badge {% if r.window_condition=='Good' %}badge-resolved{% else %}badge-overdue{% endif %}">{{ r.window_condition }}</span></td>
+            </tr>{% endfor %}</tbody>
+          </table>
+        </div>
+      </div>
+      {% endif %}
+    {% endfor %}
+    {% else %}
+    <div class="card"><div class="card-body" style="text-align:center;padding:40px;color:var(--gray5)">No infrastructure records added yet by teachers.</div></div>
+    {% endif %}
+  </div>
+
+  <!-- SHARE TAB -->
+  <div id="tab-share" class="tab-pane">
+    <div class="card">
+      <div class="card-head"><i class="fas fa-share-alt"></i> Shareable Registration Link</div>
+      <div class="card-body">
+        <p style="font-size:14px;margin-bottom:16px;color:var(--gray6)">Share the link below with other students so they can register and access the complaint portal:</p>
+        <div class="share-link-box">
+          <h4><i class="fas fa-link"></i> Student Registration Link</h4>
+          <p style="font-size:13px;color:rgba(255,255,255,.7);margin-bottom:10px">Anyone with this link can register. Login requires Principal approval.</p>
+          <div class="share-url">
+            <span id="s-link">{{ request.host_url }}student/register</span>
+            <button class="btn btn-sm btn-saffron" onclick="copyText(document.getElementById('s-link').textContent)"><i class="fas fa-copy"></i> Copy Link</button>
+          </div>
+        </div>
+        <div class="share-link-box" style="margin-top:14px">
+          <h4><i class="fas fa-link"></i> Student Login Link</h4>
+          <div class="share-url">
+            <span id="l-link">{{ request.host_url }}student/login</span>
+            <button class="btn btn-sm btn-saffron" onclick="copyText(document.getElementById('l-link').textContent)"><i class="fas fa-copy"></i> Copy Link</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
